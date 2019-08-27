@@ -24,7 +24,8 @@ public final class UNCComedor {
     private let session = URLSession.shared
     
     // MARK: API endpoints
-    private static let baseURL = URL(string: "http://uncmorfi.georgealegre.com/")!
+    //private static let baseURL = URL(string: "https://uncmorfi.georgealegre.com/")!
+    private static let baseURL = URL(string: "https://frozen-sierra-45328.herokuapp.com/")!
     private static let baseImageURL = URL(string: "https://asiruws.unc.edu.ar/foto/")!
 
     // MARK: Helpers
@@ -52,6 +53,79 @@ public final class UNCComedor {
         }
         
         return nil
+    }
+    
+    // MARK: Reservation api's
+    func getReservationLogin(to code:String, callback: @escaping (_ result: Result<ReservationLogin>) -> Void){
+        
+        var request = URLComponents(string: UNCComedor.baseURL.appendingPathComponent("reservation").appendingPathComponent("login").absoluteString)!
+        request.queryItems = [URLQueryItem(name: "code", value: code)]
+        
+        let task = session.dataTask(with: request.url!) {
+            data, res, error in
+            let customError = self.handleAPIResponse(error: error, res: res)
+            guard customError == nil else {
+                callback(.failure(customError!))
+                return
+            }
+            
+            guard let data = data else {
+                callback(.failure(NSError()))
+                // TODO: follow the same criteria
+                return
+            }
+            // Decode data.
+            let decoder = JSONDecoder()
+            
+            let reservationLogin:ReservationLogin
+            do {
+                reservationLogin = try decoder.decode(ReservationLogin.self, from: data)
+            } catch {
+                callback(.failure(NSError()))
+                return
+            }
+            
+            callback(.success(reservationLogin))
+            
+        }
+        task.resume()
+    }
+    func getReservation(with reservationLogin:ReservationLogin, callback: @escaping (_ result: Result<ReservationStatusWrapper>) -> Void){
+        
+        let requestUrl = URLComponents(string: UNCComedor.baseURL.appendingPathComponent("reservation").appendingPathComponent("reserve").absoluteString)!
+        
+        var request = URLRequest(url: requestUrl.url!)
+        request.allHTTPHeaderFields = ["Content-Type" : "application/json"]
+        request.httpMethod = "POST"
+        request.httpBody = try? JSONEncoder().encode(reservationLogin)
+        let task = session.dataTask(with: request) {
+            data, res, error in
+            let customError = self.handleAPIResponse(error: error, res: res)
+            guard customError == nil else {
+                callback(.failure(customError!))
+                return
+            }
+            
+            guard let data = data else {
+                callback(.failure(NSError()))
+                // TODO: follow the same criteria
+                return
+            }
+            // Decode data.
+            let decoder = JSONDecoder()
+            
+            let reservationStatusWrapper:ReservationStatusWrapper
+            do {
+                reservationStatusWrapper = try decoder.decode(ReservationStatusWrapper.self, from: data)
+            } catch {
+                callback(.failure(NSError()))
+                return
+            }
+            
+            callback(.success(reservationStatusWrapper))
+            
+        }
+        task.resume()
     }
     
     // MARK: - Public API methods

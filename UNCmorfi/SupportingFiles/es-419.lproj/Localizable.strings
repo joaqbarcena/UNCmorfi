@@ -29,8 +29,19 @@
 // Basic
 "cancel" = "Cancelar";
 "loading" = "Cargando…";
+"delete" = "Eliminar";
 
 // #  Balance:
+// ## Reservation texts
+"balance.reservation.title" = "Reservacion";
+"balance.reservation.description" = "Por favor complete el captcha";
+"balance.reservation.reserved.label" = "🙌 Felicidades, vas a comer 🙌";
+"balance.reservation.soldout.label" = "😭 Se agotaron 😭";
+"balance.reservation.unavailable.label" = "💩 Fuera de hora master 💩";
+"balance.reservation.error.label" = "😬 Uhh... Hubo un error 😬";
+"balance.reservation.redoLogin.label" = "🙃 Le fallaste al al captcha 🙃";
+"balance.reservation.captcha.error.label" = "😵 Uhh... Hubo un error con el captcha 😵";
+
 // ## Add User via AlertController
 "balance.add.user.text.title" = "Agregar una persona nueva";
 "balance.add.user.text.description" = "Escriba el código de barras…";

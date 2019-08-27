@@ -29,8 +29,20 @@
 // Basic
 "cancel" = "Cancel";
 "loading" = "Loading…";
+"delete" = "Delete";
 
 // #  Balance
+// ## Leading swipe
+"balance.reservation.title" = "Reservation";
+"balance.reservation.description" = "Please fill the captcha";
+"balance.reservation.reserved.label" = "🙌 Congrats! you're gonna eat 🙌";
+"balance.reservation.soldout.label" = "😭 Soldout, that's sad 😭";
+"balance.reservation.unavailable.label" = "💩 It's late mate 💩";
+"balance.reservation.error.label" = "😬 Ohhh... there was an error 😬";
+"balance.reservation.redoLogin.label" = "🙃 Le fallaste al al captcha 🙃";
+"balance.reservation.captcha.error.label" = "😵 Ohhh... there was an error with captcha 😵";
+
+
 // ## Add User via AlertController
 "balance.add.user.text.title" = "Add a new person";
 "balance.add.user.text.description" = "Type the barcode…";

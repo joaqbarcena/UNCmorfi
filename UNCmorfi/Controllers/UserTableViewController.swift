@@ -70,14 +70,27 @@ class UserTableViewController: UITableViewController {
         
         return cell
     }
-
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            users.remove(at: indexPath.row)
-            tableView.deleteRows(at: [indexPath], with: .fade)
+    
+    override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
+        //Reservation swipe action
+        let reservationAction = UITableViewRowAction(style: .normal, title: "balance.reservation.title".localized()){
+            [unowned self] action, indexPath in
+            //Check for valid session stored
+            //i.e. it exist and < 1 hour
+            //if isn't valid
+            self.showReservationLogin(to: self.users[indexPath.row])
         }
         
-        saveUsers()
+        //Delete swipe action
+        let deleteAction = UITableViewRowAction(style: .destructive, title: "delete".localized()){
+            [unowned self] action, indexPath in
+            self.users.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .fade)
+            self.saveUsers()
+        }
+        reservationAction.backgroundColor = UIColor.orange
+        
+        return [deleteAction, reservationAction]
     }
     
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
@@ -134,6 +147,55 @@ class UserTableViewController: UITableViewController {
                 self.users = users
                 self.tableView.reloadData()
                 self.saveUsers()
+            }
+        }
+    }
+    
+    func showReservationLogin(to user:User){
+        DispatchQueue.main.async {
+            let alertvc = CaptchaViewController().thenPresent(over: self)
+            UNCComedor.api.getReservationLogin(to: user.code){
+                result in
+                switch result {
+                case let .success(reservationLogin):
+                    guard let captchaData = reservationLogin.captchaImage,
+                        let captchaImage = UIImage(data: captchaData) else {
+                            print("Cant decode captcha image")
+                            alertvc.setResultMessage("balance.reservation.captcha.error.label".localized())
+                            return
+                    }
+                    
+                    alertvc.setCaptchaImage(captchaImage)
+                    alertvc.onConfirmAlert {
+                        text in
+                        let cleanReservationLogin = ReservationLogin(path: reservationLogin.path, token:reservationLogin.token, captchaText: text, captchaImage:nil, cookies:reservationLogin.cookies, code: reservationLogin.code)
+                        UNCComedor.api.getReservation(with: cleanReservationLogin){
+                            result in
+                            //If itsn't redoLogin save cleanReservation
+                            switch result {
+                            case let .success(reservationStatusWrapper):
+                                let resultText:String?
+                                switch reservationStatusWrapper.reservationStatus {
+                                case .reserved?:
+                                    resultText = "balance.reservation.reserved.label".localized()
+                                case .soldout?:
+                                    resultText = "balance.reservation.soldout.label".localized()
+                                case .unavailable?:
+                                    resultText = "balance.reservation.unavailable.label".localized()
+                                case .redoLogin?:
+                                    resultText = "balance.reservation.redoLogin.label".localized()
+                                default :
+                                    resultText = "balance.reservation.error.label".localized()
+                                }
+                                alertvc.setResultMessage(resultText!)
+                            case let .failure(err):
+                                print(err)
+                            }
+                        }
+                    }
+                case let .failure(err):
+                    print(err)
+                }
             }
         }
     }
