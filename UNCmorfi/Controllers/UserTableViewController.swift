@@ -188,13 +188,15 @@ class UserTableViewController: UITableViewController {
                                     resultText = "balance.reservation.error.label".localized()
                                 }
                                 alertvc.setResultMessage(resultText!)
-                            case let .failure(err):
-                                print(err)
+                            case .failure(_):
+                                alertvc.setResultMessage("balance.reservation.error.label".localized())
+                                //print(err)
                             }
                         }
                     }
-                case let .failure(err):
-                    print(err)
+                case .failure(_):
+                    alertvc.setResultMessage("balance.reservation.error.label".localized())
+                    //print(err)
                 }
             }
         }
