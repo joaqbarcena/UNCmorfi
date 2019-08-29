@@ -30,11 +30,13 @@
 "cancel" = "Cancelar";
 "loading" = "Cargando…";
 "delete" = "Eliminar";
+"options" = "Opciones";
 
 // #  Balance:
 // ## Reservation texts
 "balance.reservation.title" = "Reservacion";
 "balance.reservation.description" = "Por favor complete el captcha";
+"balance.reservation.resession" = "Re uso de sesion";
 "balance.reservation.reserved.label" = "🙌 Felicidades, vas a comer 🙌";
 "balance.reservation.soldout.label" = "😭 Se agotaron 😭";
 "balance.reservation.unavailable.label" = "💩 Fuera de hora master 💩";

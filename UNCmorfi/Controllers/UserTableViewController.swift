@@ -13,6 +13,7 @@ import os.log
 class UserTableViewController: UITableViewController {
     // MARK: Properties
     private var users: [User] = []
+    private var timer:Timer?
 
     // MARK: Setup.
     override func viewDidLoad() {
@@ -46,7 +47,8 @@ class UserTableViewController: UITableViewController {
         
         let addViaCameraButton = UIBarButtonItem(barButtonSystemItem: .camera, target: self, action: #selector(addViaCameraButtonTapped(_:)))
         let addViaTextButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addViaTextButtonTapped(_:)))
-        self.navigationItem.rightBarButtonItems = [addViaTextButton, addViaCameraButton]
+        let devOptions = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(openOptions(_:)))
+        self.navigationItem.rightBarButtonItems = [addViaTextButton, addViaCameraButton, devOptions]
     }
 
     // MARK: UITableViewDelegate
@@ -71,14 +73,96 @@ class UserTableViewController: UITableViewController {
         return cell
     }
     
+    @available(iOS 11.0, *)
+    override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let beastMode = UIContextualAction(style: .normal, title: "Beast Mode") { (action, view, completion) in
+            let user = self.users[indexPath.row]
+//
+//            if self.timer != nil {
+//                self.timer?.invalidate()
+//                self.timer = nil
+//            } else {
+                let alert = UIAlertController(title: "balance.reservation.resession".localized(),
+                                              message: "loading".localized(), preferredStyle: .actionSheet)
+                alert.addAction(UIAlertAction(title: "cancel".localized(), style: .cancel){
+                    action in
+                    if self.timer != nil {
+                        self.timer?.invalidate()
+                        self.timer = nil
+                    }
+                })
+                DispatchQueue.main.async {
+                    self.present(alert, animated: true)
+                }
+                self.timer = Timer.scheduledTimer(withTimeInterval: UNCComedor.remote ? 2 : 0.7 , repeats: true, block: { timer in
+                    if let reservationLogin = ReservationLogin.load(code: user.code) {
+                        UNCComedor.api.getReservation(with: reservationLogin){
+                            result in
+                            let (resultText, redoLogin) = UNCComedor.reservationResult(result)
+                            if resultText == "balance.reservation.reserved.label".localized() ||
+                               resultText == "balance.reservation.soldout.label".localized() || redoLogin {
+                                timer.invalidate()
+                                self.timer = nil
+                                if redoLogin {
+                                    reservationLogin.deleteFromStorage()
+                                    self.showReservationLogin(to: user)
+                                }
+                            }
+                            if !redoLogin, case let .success(status) = result,
+                                let path = status.path {
+                                reservationLogin.copy(withPath: path, withCaptchaImage: nil)
+                                    .save()
+                            }
+                            NSLog(resultText)
+                            DispatchQueue.main.async {
+                                alert.message = resultText
+                            }
+                        }
+                    } else {
+                        timer.invalidate()
+                        self.timer = nil
+                        DispatchQueue.main.async {
+                            alert.dismiss(animated: false, completion: nil)
+                        }
+                        self.showReservationLogin(to: user)
+                    }
+                })
+            //}
+            completion(true)
+        }
+        beastMode.backgroundColor = UIColor.lightGray
+        return UISwipeActionsConfiguration(actions:[beastMode])
+    }
+    
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         //Reservation swipe action
         let reservationAction = UITableViewRowAction(style: .normal, title: "balance.reservation.title".localized()){
             [unowned self] action, indexPath in
             //Check for valid session stored
             //i.e. it exist and < 1 hour
-            //if isn't valid
-            self.showReservationLogin(to: self.users[indexPath.row])
+            let user = self.users[indexPath.row]
+            if let reservationLogin = ReservationLogin.load(code: user.code) {
+                UNCComedor.api.getReservation(with: reservationLogin){
+                    result in
+                    let (resultText, redoLogin) = UNCComedor.reservationResult(result)
+                    if redoLogin {
+                        reservationLogin.deleteFromStorage()
+                    } else {
+                        if case let .success(status) = result,
+                            let path = status.path {
+                         reservationLogin.copy(withPath: path, withCaptchaImage: nil).save()
+                        }
+                    }
+                    let alert = UIAlertController(title: "balance.reservation.resession".localized(), message: resultText, preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "Ok", style: .cancel))
+                    DispatchQueue.main.async {
+                        self.present(alert, animated: true)
+                    }
+                }
+            } else { //if isn't valid
+                self.showReservationLogin(to: user)
+            }
+            
         }
         
         //Delete swipe action
@@ -104,6 +188,22 @@ class UserTableViewController: UITableViewController {
     }
     
     // MARK: Actions
+    @objc private func openOptions(_ sender: UIBarButtonItem) {
+        let ac = UIAlertController(title: "options".localized(),
+                                   message: nil,
+                                   preferredStyle: .actionSheet)
+        ac.addAction(UIAlertAction(title: "cancel".localized(), style: .cancel))
+        ac.addAction(UIAlertAction(title: "Clean reservation sessions", style: .default){
+            action in
+            self.users.forEach({ ReservationLogin.load(code: $0.code)?.deleteFromStorage() })
+        })
+        ac.addAction(UIAlertAction(title: "\(UNCComedor.remote ? "Local" : "Remote") reservations mode", style: .default){
+            action in
+            UNCComedor.remote = !UNCComedor.remote
+        })
+        present(ac, animated: true, completion: nil)
+    }
+    
     @objc private func addViaTextButtonTapped(_ sender: UIBarButtonItem) {
         let ac = UIAlertController(title: "balance.add.user.text.title".localized(),
                                    message: "balance.add.user.text.description".localized(),
@@ -168,29 +268,19 @@ class UserTableViewController: UITableViewController {
                     alertvc.setCaptchaImage(captchaImage)
                     alertvc.onConfirmAlert {
                         text in
-                        let cleanReservationLogin = ReservationLogin(path: reservationLogin.path, token:reservationLogin.token, captchaText: text, captchaImage:nil, cookies:reservationLogin.cookies, code: reservationLogin.code)
+                        let cleanReservationLogin = reservationLogin.copy(withCaptchaText: text, withCaptchaImage: nil)
                         UNCComedor.api.getReservation(with: cleanReservationLogin){
                             result in
                             //If itsn't redoLogin save cleanReservation
-                            switch result {
-                            case let .success(reservationStatusWrapper):
-                                let resultText:String?
-                                switch reservationStatusWrapper.reservationStatus {
-                                case .reserved?:
-                                    resultText = "balance.reservation.reserved.label".localized()
-                                case .soldout?:
-                                    resultText = "balance.reservation.soldout.label".localized()
-                                case .unavailable?:
-                                    resultText = "balance.reservation.unavailable.label".localized()
-                                case .redoLogin?:
-                                    resultText = "balance.reservation.redoLogin.label".localized()
-                                default :
-                                    resultText = "balance.reservation.error.label".localized()
+                            let (resultText, redoLogin) = UNCComedor.reservationResult(result)
+                            alertvc.setResultMessage(resultText)
+                            if !redoLogin {
+                                guard case let .success(status) = result,
+                                    let path = status.path, let token = status.token else {
+                                    return
                                 }
-                                alertvc.setResultMessage(resultText!)
-                            case .failure(_):
-                                alertvc.setResultMessage("balance.reservation.error.label".localized())
-                                //print(err)
+                                cleanReservationLogin.copy(withPath: path, withToken:token, withCaptchaImage: nil)
+                                    .save()
                             }
                         }
                     }

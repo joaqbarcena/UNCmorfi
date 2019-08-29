@@ -30,16 +30,18 @@
 "cancel" = "Cancel";
 "loading" = "Loading…";
 "delete" = "Delete";
+"options" = "Options";
 
 // #  Balance
 // ## Leading swipe
 "balance.reservation.title" = "Reservation";
 "balance.reservation.description" = "Please fill the captcha";
+"balance.reservation.resession" = "Re-using session";
 "balance.reservation.reserved.label" = "🙌 Congrats! you're gonna eat 🙌";
 "balance.reservation.soldout.label" = "😭 Soldout, that's sad 😭";
 "balance.reservation.unavailable.label" = "💩 It's late mate 💩";
 "balance.reservation.error.label" = "😬 Ohhh... there was an error 😬";
-"balance.reservation.redoLogin.label" = "🙃 Le fallaste al al captcha 🙃";
+"balance.reservation.redoLogin.label" = "🙃 you messed up captcha 🙃";
 "balance.reservation.captcha.error.label" = "😵 Ohhh... there was an error with captcha 😵";
 
 

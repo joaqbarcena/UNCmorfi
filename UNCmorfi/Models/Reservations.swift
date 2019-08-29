@@ -19,6 +19,18 @@ struct ReservationLogin {
     }
 }
 
+extension ReservationLogin {
+    func copy(withPath:String?=nil,
+              withToken:String?=nil,
+              withCaptchaText:String?=nil,
+              withCaptchaImage:Data?,
+              withCookies:[CodableCookie]?=nil,
+              withCode:String?=nil
+              ) -> ReservationLogin {
+        return ReservationLogin(path: withPath ?? self.path, token: withToken ?? self.token, captchaText: withCaptchaText ?? self.captchaText, captchaImage: withCaptchaImage, cookies: withCookies ?? self.cookies, code: withCode ?? self.code)
+    }
+}
+
 //Codable extension
 //Get out her a bailar swift jaja https://stackoverflow.com/questions/34728518/swift-can-i-call-a-struct-default-memberwise-init-from-my-custom-init-method
 extension ReservationLogin:Codable {
@@ -57,11 +69,29 @@ extension ReservationLogin:Codable {
         if let captchaText = captchaText {
             try container.encode(captchaText, forKey: .captchaText)
         }
-        
+    }
+    
+    public static func load(code:String) -> ReservationLogin? {
+        let reservationLoginString = UserDefaults.standard.data(forKey: code)
+        if reservationLoginString != nil {
+            return try? JSONDecoder().decode(ReservationLogin.self, from: reservationLoginString!)
+        }
+        return nil
+    }
+    
+    public func save() {
+        let lastReservationLogin = try? JSONEncoder().encode(self)
+        if lastReservationLogin != nil {
+            UserDefaults.standard.set(lastReservationLogin!, forKey: self.code)
+        }
+    }
+    
+    public func deleteFromStorage() {
+        UserDefaults.standard.removeObject(forKey: self.code)
     }
 }
 
-struct CodableCookie : Codable {
+struct CodableCookie {
     let name:String
     let value:String
     //let sessionOnly:Bool
@@ -73,7 +103,9 @@ struct CodableCookie : Codable {
         case value
         case domain
     }
-    
+}
+
+extension CodableCookie : Codable{
     init (from decoder:Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         name = try values.decode(String.self, forKey: .name)
@@ -89,7 +121,31 @@ struct CodableCookie : Codable {
     }
 }
 
-enum ReservationStatus : String, Codable {
+extension CodableCookie {
+    func toCookie() -> HTTPCookie? {
+        return HTTPCookie(properties:[
+            HTTPCookiePropertyKey.name : self.name,
+            HTTPCookiePropertyKey.value : self.value,
+            HTTPCookiePropertyKey.domain : self.domain,
+            //Harcodeo cosmico, without this httpCookie is nil
+            HTTPCookiePropertyKey.path : "/",
+            HTTPCookiePropertyKey.secure : "FALSE",
+            HTTPCookiePropertyKey.expires : "(null)"
+            ])
+    }
+    
+    public static func fromCookie(cookie:HTTPCookie) -> CodableCookie {
+        return CodableCookie(name: cookie.name, value:cookie.value, domain:cookie.domain)
+    }
+}
+
+struct ReservationStatus : Codable {
+    let reservationResult:ReservationResult?
+    let path:String?
+    let token:String?
+}
+
+enum ReservationResult : String, Codable {
     case reserved
     case unavailable
     case soldout
@@ -98,10 +154,6 @@ enum ReservationStatus : String, Codable {
     
     //this is to complain kitura 's test
     case empty = ""
-}
-
-struct ReservationStatusWrapper : Codable {
-    let reservationStatus:ReservationStatus?
 }
 
 // MARK: Reservation actions

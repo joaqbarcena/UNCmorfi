@@ -36,6 +36,7 @@
 		B515918965B12ADF3BD2C7AD /* Pods_UNCmorfi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96180C9E1657667115FCC632 /* Pods_UNCmorfi.framework */; };
 		D25D425A230FAD7A00601B1D /* Reservations.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25D4259230FAD7A00601B1D /* Reservations.swift */; };
 		D25D425C23108D0700601B1D /* CaptchaAlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25D425B23108D0700601B1D /* CaptchaAlertView.swift */; };
+		D2B95F072315BF28003D1C4E /* URLSessionBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B95F062315BF28003D1C4E /* URLSessionBackground.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +87,7 @@
 		96180C9E1657667115FCC632 /* Pods_UNCmorfi.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_UNCmorfi.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D25D4259230FAD7A00601B1D /* Reservations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reservations.swift; sourceTree = "<group>"; };
 		D25D425B23108D0700601B1D /* CaptchaAlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptchaAlertView.swift; sourceTree = "<group>"; };
+		D2B95F062315BF28003D1C4E /* URLSessionBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionBackground.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				5E2B93D91EAD6B4E00C9E6FC /* UNCComedor.swift */,
+				D2B95F062315BF28003D1C4E /* URLSessionBackground.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -293,6 +296,9 @@
 						LastSwiftMigration = 0900;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
 							com.apple.Maps.iOS = {
 								enabled = 1;
 							};
@@ -393,6 +399,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D2B95F072315BF28003D1C4E /* URLSessionBackground.swift in Sources */,
 				5EE8D7BA1F8CE1B200D18449 /* Information.swift in Sources */,
 				D25D425A230FAD7A00601B1D /* Reservations.swift in Sources */,
 				5E69570A1F660E5500713CDA /* CounterViewController.swift in Sources */,
